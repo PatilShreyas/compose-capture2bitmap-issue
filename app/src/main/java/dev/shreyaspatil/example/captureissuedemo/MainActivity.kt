@@ -10,13 +10,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +38,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dev.shreyaspatil.example.captureissuedemo.ui.theme.CaptureIssueDemoTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -57,7 +60,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Demo() {
-    Column {
+    Column(Modifier.verticalScroll(rememberScrollState())) {
         // 1. Show actual profile
         Text(text = "1. Just Composable")
         Profile()
@@ -67,6 +70,18 @@ fun Demo() {
         // 2. Show profile with capturable modifier
         Text(text = "2. Composable with Bitmap capture-ability")
         ProfileWithCapturability()
+
+        HorizontalDivider()
+
+        // 3. Just timer
+        Text(text = "3. Just Timer")
+        Timer()
+
+        HorizontalDivider()
+
+        // 4. Stateful content
+        Text(text = "3. Timer with Bitmap capture-ability")
+        StatefulTimerWithCapturability()
     }
 }
 
@@ -114,6 +129,71 @@ fun ProfileWithCapturability() {
         capturedImage?.let { image ->
             Text(text = "This is captured ⬇️")
             Image(bitmap = image, contentDescription = "Captured content")
+        }
+    }
+}
+
+@Composable
+fun StatefulTimerWithCapturability() {
+    Column {
+        val picture = remember { Picture() }
+        val scope = rememberCoroutineScope()
+        var capturedImage by remember { mutableStateOf<ImageBitmap?>(null) }
+
+        Column(Modifier.drawWithCache {
+            // Example that shows how to redirect rendering to an Android Picture and then
+            // draw the picture into the original destination
+            val width = this.size.width.toInt()
+            val height = this.size.height.toInt()
+
+            onDrawWithContent {
+                val pictureCanvas =
+                    androidx.compose.ui.graphics.Canvas(
+                        picture.beginRecording(
+                            width,
+                            height
+                        )
+                    )
+                // requires at least 1.6.0-alpha01+
+                draw(this, this.layoutDirection, pictureCanvas, this.size) {
+                    this@onDrawWithContent.drawContent()
+                }
+                picture.endRecording()
+
+                drawIntoCanvas { canvas -> canvas.nativeCanvas.drawPicture(picture) }
+            }
+        }) {
+            Timer()
+        }
+
+        Button(onClick = {
+            scope.launch(Dispatchers.Default) {
+                capturedImage = createBitmapFromPicture(picture).asImageBitmap()
+            }
+        }) {
+            Text(text = "Capture Now")
+        }
+
+        capturedImage?.let { image ->
+            Text(text = "This is captured ⬇️")
+            Image(bitmap = image, contentDescription = "Captured content")
+        }
+    }
+}
+
+@Composable
+fun Timer() {
+    var secondsRemaining by remember { mutableStateOf(120) }
+
+    Column {
+        Text(text = "Remaining: ${secondsRemaining}s", style = MaterialTheme.typography.labelLarge)
+    }
+
+    LaunchedEffect(key1 = Unit) {
+        while (true) {
+            if (secondsRemaining <= 0) break
+            delay(1000)
+            secondsRemaining--
         }
     }
 }
