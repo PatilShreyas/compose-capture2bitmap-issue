@@ -73,8 +73,6 @@ fun Demo() {
 @Composable
 fun ProfileWithCapturability() {
     Column {
-
-
         val picture = remember { Picture() }
         val scope = rememberCoroutineScope()
         var capturedImage by remember { mutableStateOf<ImageBitmap?>(null) }
