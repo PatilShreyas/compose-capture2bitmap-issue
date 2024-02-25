@@ -3,6 +3,8 @@
 A sample to demonstrate issues observed around the guide for ["Write contents of a composable to a bitmap"](https://developer.android.com/jetpack/compose/graphics/draw/modifiers#composable-to-bitmap) 
 when the network image _(like `AsyncImage` from Coil-kt)_ is used.
 
+Issue: https://issuetracker.google.com/issues/305653364
+
 ## Issues
 
 ### Issue 1
